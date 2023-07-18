@@ -1,0 +1,23 @@
+.sales-card {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .card-info {
+    display: flex;
+    align-items: center;
+  }
+  
+  .info-item {
+    display: flex;
+    align-items: center;
+    margin-right: 10px;
+  }
+  
+  .info-item span:first-child {
+    font-weight: bold;
+    margin-right: 5px;
+  }
+  

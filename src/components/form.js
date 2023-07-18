@@ -1,68 +1,65 @@
-// Form.js
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useMutation, useQuery, QueryClient, QueryClientProvider } from 'react-query'; 
-import { updateName, submitName } from '../store/formSlice';
-import { setUsers } from '../store/usersSlice';
-import { fetchUsers } from '../mockApi/users';
+import InfiniteScroll from 'react-infinite-scroll-component';
 
-const saveNameToServer = async (name) => {
-  // Simulating an API call to save the name
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  console.log(`Saving name: ${name}`);
-};
+import SalesCard from './SalesCard';
+import {
+  selectSales,
+  selectPage,
+  selectIsLoading,
+  selectError,
+  fetchSalesStart,
+  fetchSalesSuccess,
+  fetchSalesFailure,
+} from './salesSlice';
 
-const Form = () => {
-  const name = useSelector((state) => state.form.name);
-  const submittedName = useSelector((state) => state.form.submittedName);
-  const users = useSelector((state) => state.users);
+const SalesList = () => {
   const dispatch = useDispatch();
+  const sales = useSelector(selectSales);
+  const page = useSelector(selectPage);
+  const isLoading = useSelector(selectIsLoading);
+  const error = useSelector(selectError);
 
-  const queryClient = new QueryClient();
+  useEffect(() => {
+    dispatch(fetchSalesStart());
+    fetchSalesData();
+  }, [dispatch]);
 
-  const { mutate } = useMutation(saveNameToServer, {
-    onSuccess: () => {
-      dispatch(submitName());
-      queryClient.invalidateQueries('users');
-    },
-  });
-
-  const { data, isLoading, isError } = useQuery('users', fetchUsers, {
-    onSuccess: (data) => {
-      dispatch(setUsers(data));
-    },
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    mutate(name);
+  const fetchSalesData = async () => {
+    try {
+      const response = await fetch(`/api/sales?page=${page}`);
+      const data = await response.json();
+      dispatch(fetchSalesSuccess(data));
+    } catch (error) {
+      dispatch(fetchSalesFailure(error.message));
+    }
   };
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (isError) {
-    return <div>Error loading data</div>;
-  }
+  const handleLoadMore = () => {
+    dispatch(fetchSalesStart());
+    fetchSalesData();
+  };
 
   return (
-    <div>
-      <h1>Form</h1>
-      <form onSubmit={handleSubmit}>
-        <label>
-          Name:
-          <input type="text" value={name} onChange={(e) => dispatch(updateName(e.target.value))} />
-        </label>
-        <button type="submit">Submit</button>
-      </form>
-      {submittedName && <p>Submitted Name: {submittedName}</p>}
-      <h2>User List:</h2>
-      {users.map((user) => (
-        <div key={user.id}>{user.name}</div>
+    <InfiniteScroll
+      dataLength={sales.length}
+      next={handleLoadMore}
+      hasMore={!isLoading && !error}
+      loader={<p>Loading...</p>}
+    >
+      {sales.map((sale, index) => (
+        <SalesCard
+          key={index}
+          country={sale.country}
+          sales={sale.sales}
+          value={sale.value}
+          bounce={sale.bounce}
+        />
       ))}
-    </div>
+      {isLoading && <p>Loading more...</p>}
+      {error && <p>Error: {error}</p>}
+    </InfiniteScroll>
   );
 };
 
-export default Form;
+export default SalesList;

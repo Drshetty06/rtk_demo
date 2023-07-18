@@ -1,11 +1,13 @@
-
 import React from 'react';
-import Form from './components/form';
+import SalesList from './components/sales/SalesList';
+
+
 
 const App = () => {
   return (
     <div>
-      <Form />
+      <h1>Sales App</h1>
+      <SalesList />
     </div>
   );
 };
